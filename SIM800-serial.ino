@@ -1,4 +1,4 @@
-#define LOG(x) Serial.print(millis()); Serial.print(' '); Serial.println(x);
+#define LOG(x) if (Serial) {Serial.print(millis()); Serial.print(' '); Serial.println(x); }
 
 // #define SINGLE_RUN_AND_PIPE 1
 
@@ -13,16 +13,21 @@
 
 void setup()
 {
+  pinMode(17, OUTPUT);
+  digitalWrite(17, LOW);
+
   pinMode(GSM_POWERSWITCH_PIN, OUTPUT);
   digitalWrite(GSM_POWERSWITCH_PIN, LOW); // High by default
 
-  Serial.begin(115200);
-  while (!Serial);
-  Serial.println("Started serial!");
+  if (Serial) {
+    Serial.begin(115200);
+    while (!Serial);
+    LOG("Started serial!");
+  }
 
   Serial1.begin(115200);
   while (!Serial1);
-  Serial.println("Started serial1!");
+  LOG("Started serial1!");
 
   int gsmModuleActive = 0;
   for (int i = 0; i < 3; i++) {
@@ -131,13 +136,13 @@ void loop ()
     LOG(msg + sensorValue);
 
     LOG("Sending sensor value");
-    sendSensorValue(sensorValue);
+    sendSensorValue("test-olimex", String(sensorValue), SERVER, PORT);
     LOG("Sensor value sent!");
   }
 
   stopTCPConnection();
   LOG("TCP connection shut down!");
-  Serial.println();
+  LOG(' ');
 
 #ifdef SINGLE_RUN_AND_PIPE
   while (1) {
@@ -221,8 +226,21 @@ void stopTCPConnection() {
   sendStringForOK("AT+CIPSHUT");
 }
 
-void sendSensorValue(int value) {
-  sendString("The value is: " + String(value) + "\r\n");
+void sendSensorValue(String name, String value, String server, int port) {
+  String content = value;
+  String headers = "POST /thegist/device/1/sensor/1/measurement HTTP/1.1\n"
+                   "Host: " + server + ":" + String(port) + "\n"
+                   "Connection: keep-alive\n"
+                   "Content-Length: " + String(content.length()) + "\n"
+                   "Cache-Control: no-cache\n"
+                   "User-Agent: Olimex Sensorbed 1.0\n"
+                   "Content-Type: application/json\n"
+                   "Accept: */*\n\n";
+  LOG("Content:");
+  LOG(content);
+  LOG("Headers:");
+  LOG(headers);
+  Serial1.print(headers + content);
   Serial1.write(26);
   Serial1.flush();
 }
