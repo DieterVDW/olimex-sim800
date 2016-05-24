@@ -228,7 +228,7 @@ void stopTCPConnection() {
 
 void sendSensorValue(String name, String value, String server, int port) {
   String content = value;
-  String headers = "POST /thegist/device/1/sensor/1/measurement HTTP/1.1\n"
+  String headers = "POST /thegist/device/1/sensor/1/data HTTP/1.1\n"
                    "Host: " + server + ":" + String(port) + "\n"
                    "Connection: keep-alive\n"
                    "Content-Length: " + String(content.length()) + "\n"
