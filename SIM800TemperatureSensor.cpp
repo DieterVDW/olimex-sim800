@@ -15,7 +15,7 @@ String SIM800TemperatureSensor::getValue() {
   int commaPos = response.indexOf(',');
   int okPos = response.indexOf('OK', commaPos);
   String value = response.substring(commaPos + 1, okPos-1);
-  LOG("Temperature value read: " + value);
+  LOG("SIM800: Temperature value read: " + value);
   return value;
 }
 

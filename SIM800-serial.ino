@@ -4,12 +4,14 @@
 #include "US100.h"
 #include "SIM800.h"
 #include "SIM800TemperatureSensor.h"
+#include "SIM800BatterySensor.h"
 
-// #define SINGLE_RUN_AND_PIPE 1
+// #define SINGLE_RUN_AND_PIPE
 
 #define ENABLE_LED
 
-#define DO_SEND
+#define DO_SENSORS
+// #define DO_SEND
 #define SERVER "dietervdw.ddns.net"
 #define PORT 12345
 
@@ -21,14 +23,15 @@ SIM800 sim800;
 #define US100_TX 9
 US100 us100(US100_RX, US100_TX);
 
-const int NUM_SENSORS = 3;
+const int NUM_SENSORS = 4;
 Sensor* sensors[NUM_SENSORS];
 
 void setup()
 {
   sensors[0] = new SIM800TemperatureSensor(&sim800);
-  sensors[1] = new US100TemperatureSensor(&us100);
-  sensors[2] = new US100DistanceSensor(&us100);
+  sensors[1] = new SIM800BatterySensor(&sim800);
+  sensors[2] = new US100TemperatureSensor(&us100);
+  sensors[3] = new US100DistanceSensor(&us100);
 
 #ifdef ENABLE_LED
   pinMode(17, OUTPUT);
@@ -79,6 +82,16 @@ void loop ()
   }
 #endif
 
+#ifdef DO_SENSORS
+  for (int i = 0; i < NUM_SENSORS; i++) {
+    Sensor* sensor = sensors[i];
+    String sensorName = sensor->getName();
+    LOG("Reading sensor: " + sensorName);
+    String value = sensor->getValue();
+    LOG("Value: " + value);
+  }
+#endif
+
 #ifdef DO_SEND
   LOG("Starting TCP connection...");
   int ret = sim800.startTCPConnection(SERVER, PORT);
@@ -89,7 +102,7 @@ void loop ()
       String sensorName = sensor->getName();
       LOG("Reading sensor: " + sensorName);
       String value = sensor->getValue();
-      
+
       content += "\"" + sensorName + "\": \"" + value + "\",";
     }
     content += "}";
