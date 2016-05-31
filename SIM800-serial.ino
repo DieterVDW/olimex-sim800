@@ -6,12 +6,12 @@
 #include "SIM800TemperatureSensor.h"
 #include "SIM800BatterySensor.h"
 
-// #define SINGLE_RUN_AND_PIPE
-
 #define ENABLE_LED
 
-#define DO_SENSORS
+#define SINGLE_RUN_AND_PIPE
+// #define DO_SENSORS
 // #define DO_SEND
+#define ACCESS_POINT "internet.proximus.be"
 #define SERVER "dietervdw.ddns.net"
 #define PORT 12345
 
@@ -48,6 +48,10 @@ void setup()
   while (!Serial1);
   LOG("Started serial1!");
 
+  startupSIM800();
+}
+
+void startupSIM800() {
   int gsmModuleActive = 0;
   for (int i = 0; i < 3; i++) {
     delay(500);
@@ -62,9 +66,9 @@ void setup()
 
   delay(1000);
 
-  //  checkPIN();
-  //
-  //  setupGPRS();
+  sim800.checkPIN();
+
+  sim800.enableGPRS(ACCESS_POINT);
 }
 
 void waitForGSMModule() {
