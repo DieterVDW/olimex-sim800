@@ -5,12 +5,9 @@
 #ifndef SIM800_H
 #define SIM800_H
 
-#define DEFAULT_PIN 6776
-#define DEFAULT_GSM_POWERSWITCH_PIN 11
-
 class SIM800 {
   public:
-    SIM800(int powerPin = DEFAULT_GSM_POWERSWITCH_PIN, int pinCode = DEFAULT_PIN);
+    SIM800(int powerPin, int pinCode);
     
     int testActive();
     void turnOn();
@@ -25,6 +22,9 @@ class SIM800 {
 
     String sendStringForOK(String s);
     void sendString(String s);
+    void send(String s);
+    void write(char c);
+    void flush();
     String readString();
     String readString(int maxWaitTime);
 

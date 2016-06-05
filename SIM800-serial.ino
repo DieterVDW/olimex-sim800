@@ -8,16 +8,22 @@
 
 #define ENABLE_LED
 
-#define SINGLE_RUN_AND_PIPE
-// #define DO_SENSORS
-// #define DO_SEND
-#define ACCESS_POINT "internet.proximus.be"
+//#define SINGLE_RUN_AND_PIPE
+//#define DO_SENSORS
+#define DO_SEND
+
 #define SERVER "dietervdw.ddns.net"
 #define PORT 12345
 
 #define REPORT_DELAY 30000
 
-SIM800 sim800;
+#define DEFAULT_PIN 1234
+#define ACCESS_POINT "internet.bmbpartner.be"
+//#define DEFAULT_PIN 6776
+//#define ACCESS_POINT "internet.proximus.be"
+
+#define DEFAULT_GSM_POWERSWITCH_PIN 11
+SIM800 sim800(DEFAULT_GSM_POWERSWITCH_PIN, DEFAULT_PIN);
 
 #define US100_RX 8
 #define US100_TX 9
@@ -53,15 +59,18 @@ void setup()
 
 void startupSIM800() {
   int gsmModuleActive = 0;
-  for (int i = 0; i < 3; i++) {
-    delay(500);
-    gsmModuleActive += sim800.testActive();
-  }
-  if (gsmModuleActive == 0) {
-    sim800.turnOn();
-  }
 
-  waitForGSMModule();
+  while (gsmModuleActive == 0) {
+    for (int i = 0; i < 3; i++) {
+      delay(500);
+      gsmModuleActive += sim800.testActive();
+    }
+    if (gsmModuleActive == 0) {
+      sim800.turnOn();
+    }
+  }
+  LOG("GSM Module OK!");
+
   sim800.echoOff();
 
   delay(1000);
@@ -69,13 +78,6 @@ void startupSIM800() {
   sim800.checkPIN();
 
   sim800.enableGPRS(ACCESS_POINT);
-}
-
-void waitForGSMModule() {
-  while (!sim800.testActive()) {
-    delay(1000);
-  }
-  LOG("GSM Module OK!");
 }
 
 void loop ()
@@ -97,22 +99,28 @@ void loop ()
 #endif
 
 #ifdef DO_SEND
+  LOG("Reading sensors...");
+
+  String content = "{";
+  for (int i = 0; i < NUM_SENSORS; i++) {
+    Sensor* sensor = sensors[i];
+    String sensorName = sensor->getName();
+    LOG("Reading sensor: " + sensorName);
+    String value = sensor->getValue();
+
+    content += "\"" + sensorName + "\": \"" + value + "\",";
+  }
+  content += "}";
+
   LOG("Starting TCP connection...");
   int ret = sim800.startTCPConnection(SERVER, PORT);
+  delay(1000);
   if (ret >= 0) {
-    String content = "{";
-    for (int i = 0; i < NUM_SENSORS; i++) {
-      Sensor* sensor = sensors[i];
-      String sensorName = sensor->getName();
-      LOG("Reading sensor: " + sensorName);
-      String value = sensor->getValue();
-
-      content += "\"" + sensorName + "\": \"" + value + "\",";
-    }
-    content += "}";
+    sendSensorValue(content, SERVER, PORT);
+  delay(1000);
   }
-
   sim800.stopTCPConnection();
+  delay(1000);
   LOG("TCP connection shut down!");
 #endif
 
@@ -134,9 +142,10 @@ void sendSensorValue(String content, String server, int port) {
   LOG(content);
   LOG("Headers:");
   LOG(headers);
-  Serial1.print(headers + content);
-  Serial1.write(26);
-  Serial1.flush();
+  sim800.send(headers);
+  sim800.send(content);
+  sim800.write(26);
+  sim800.flush();
 }
 
 void pipeInOut() {

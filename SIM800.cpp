@@ -137,6 +137,20 @@ void SIM800::sendString(String s) {
   delay(500);
 }
 
+void SIM800::send(String s) {
+  Serial1.print(s);
+  Serial1.flush();
+  delay(500);
+}
+
+void SIM800::write(char c) {
+  Serial1.write(c);
+}
+
+void SIM800::flush() {
+  Serial1.flush();
+}
+
 String SIM800::readString() {
   return readString(20);
 }
