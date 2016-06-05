@@ -15,7 +15,7 @@
 #define SERVER "dietervdw.ddns.net"
 #define PORT 12345
 
-#define REPORT_DELAY 30000 // 1h
+#define REPORT_DELAY 3600000 // 1h
 
 #define DEFAULT_PIN 1234
 #define ACCESS_POINT "internet.bmbpartner.be"
@@ -130,7 +130,7 @@ void loop ()
 }
 
 void sendSensorValue(String content, String server, int port) {
-  String headers = "POST /thegist/device/1/data HTTP/1.1\n"
+  String headers = "POST /thegist/device/2/sensor/data HTTP/1.1\n"
                    "Host: " + server + ":" + String(port) + "\n"
                    "Connection: keep-alive\n"
                    "Content-Length: " + String(content.length()) + "\n"
