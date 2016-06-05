@@ -31,7 +31,8 @@ void SIM800::turnOn() {
 
 void SIM800::turnOff() {
   LOG("Shutting down GSM module!");
-  sendStringForOK("AT+CPOWD=1");
+  sendString("AT+CPOWD=1");
+  readString();
 }
 
 void SIM800::echoOff() {

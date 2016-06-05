@@ -6,21 +6,19 @@
 #include "SIM800TemperatureSensor.h"
 #include "SIM800BatterySensor.h"
 
-#define ENABLE_LED
-
+//#define ENABLE_LED
 //#define SINGLE_RUN_AND_PIPE
-//#define DO_SENSORS
+#define DO_SENSORS
 #define DO_SEND
+#define SIM800_SHUTDOWN
 
 #define SERVER "dietervdw.ddns.net"
 #define PORT 12345
 
-#define REPORT_DELAY 30000
+#define REPORT_DELAY 30000 // 1h
 
 #define DEFAULT_PIN 1234
 #define ACCESS_POINT "internet.bmbpartner.be"
-//#define DEFAULT_PIN 6776
-//#define ACCESS_POINT "internet.proximus.be"
 
 #define DEFAULT_GSM_POWERSWITCH_PIN 11
 SIM800 sim800(DEFAULT_GSM_POWERSWITCH_PIN, DEFAULT_PIN);
@@ -54,7 +52,9 @@ void setup()
   while (!Serial1);
   LOG("Started serial1!");
 
+#ifndef SIM800_SHUTDOWN
   startupSIM800();
+#endif
 }
 
 void startupSIM800() {
@@ -82,6 +82,10 @@ void startupSIM800() {
 
 void loop ()
 {
+#ifdef SIM800_SHUTDOWN
+    startupSIM800();
+#endif
+  
 #ifdef SINGLE_RUN_AND_PIPE
   while (1) {
     pipeInOut();
@@ -89,35 +93,27 @@ void loop ()
 #endif
 
 #ifdef DO_SENSORS
-  for (int i = 0; i < NUM_SENSORS; i++) {
-    Sensor* sensor = sensors[i];
-    String sensorName = sensor->getName();
-    LOG("Reading sensor: " + sensorName);
-    String value = sensor->getValue();
-    LOG("Value: " + value);
-  }
-#endif
-
-#ifdef DO_SEND
   LOG("Reading sensors...");
-
   String content = "{";
   for (int i = 0; i < NUM_SENSORS; i++) {
     Sensor* sensor = sensors[i];
     String sensorName = sensor->getName();
     LOG("Reading sensor: " + sensorName);
     String value = sensor->getValue();
+    LOG("Value: " + value);
 
     content += "\"" + sensorName + "\": \"" + value + "\",";
   }
   content += "}";
+#endif
 
+#ifdef DO_SEND
   LOG("Starting TCP connection...");
   int ret = sim800.startTCPConnection(SERVER, PORT);
   delay(1000);
   if (ret >= 0) {
     sendSensorValue(content, SERVER, PORT);
-  delay(1000);
+    delay(1000);
   }
   sim800.stopTCPConnection();
   delay(1000);
@@ -125,6 +121,10 @@ void loop ()
 #endif
 
   LOG(' ');
+
+#ifdef SIM800_SHUTDOWN
+  sim800.turnOff();
+#endif
 
   delay(REPORT_DELAY);
 }
@@ -146,6 +146,7 @@ void sendSensorValue(String content, String server, int port) {
   sim800.send(content);
   sim800.write(26);
   sim800.flush();
+  sim800.readString();
 }
 
 void pipeInOut() {
