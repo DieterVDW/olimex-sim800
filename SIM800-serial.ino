@@ -104,7 +104,7 @@ void loop ()
 
     content += "\"" + sensorName + "\": \"" + value + "\",";
   }
-  content += "}";
+  content.setCharAt(content.length()-1, '}');
 #endif
 
 #ifdef DO_SEND
