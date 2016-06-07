@@ -1,4 +1,6 @@
 #include <SoftwareSerial.h>
+#include <avr/sleep.h>
+#include <avr/wdt.h>
 
 #include "Sensor.h"
 #include "US100.h"
@@ -16,6 +18,8 @@
 #define PORT 12345
 
 #define REPORT_DELAY 3600000 // 1h
+#define SLEEP_WITH_WATCHDOG
+#define WATCHDOG_CYCLES 75  // 1 cycle ~= 8s
 
 #define DEFAULT_PIN 1234
 #define ACCESS_POINT "internet.bmbpartner.be"
@@ -32,6 +36,9 @@ Sensor* sensors[NUM_SENSORS];
 
 void setup()
 {
+  // disable ADC
+  ADCSRA = 0;
+
   sensors[0] = new SIM800TemperatureSensor(&sim800);
   sensors[1] = new SIM800BatterySensor(&sim800);
   sensors[2] = new US100TemperatureSensor(&us100);
@@ -83,9 +90,9 @@ void startupSIM800() {
 void loop ()
 {
 #ifdef SIM800_SHUTDOWN
-    startupSIM800();
+  startupSIM800();
 #endif
-  
+
 #ifdef SINGLE_RUN_AND_PIPE
   while (1) {
     pipeInOut();
@@ -104,7 +111,7 @@ void loop ()
 
     content += "\"" + sensorName + "\": \"" + value + "\",";
   }
-  content.setCharAt(content.length()-1, '}');
+  content.setCharAt(content.length() - 1, '}');
 #endif
 
 #ifdef DO_SEND
@@ -126,8 +133,42 @@ void loop ()
   sim800.turnOff();
 #endif
 
-  delay(REPORT_DELAY);
+  sleepUntilNextReading();
 }
+
+void sleepUntilNextReading() {
+#ifdef SLEEP_WITH_WATCHDOG
+  for (int cycles = 0; cycles < WATCHDOG_CYCLES; cycles++) {
+    // clear various "reset" flags
+    MCUSR = 0;
+    // allow changes, disable reset
+    WDTCSR = bit (WDCE) | bit (WDE);
+    // set interrupt mode and an interval
+    WDTCSR = bit (WDIE) | bit (WDP3) | bit (WDP0);    // set WDIE, and 8 seconds delay
+    wdt_reset();  // pat the dog
+
+    set_sleep_mode (SLEEP_MODE_PWR_DOWN);
+    noInterrupts ();           // timed sequence follows
+    sleep_enable();
+
+    interrupts ();             // guarantees next instruction executed
+    sleep_cpu ();
+
+    // cancel sleep as a precaution
+    sleep_disable();
+  }
+#else
+  delay(REPORT_DELAY);
+#endif
+}
+
+#ifdef SLEEP_WITH_WATCHDOG
+// watchdog interrupt
+ISR (WDT_vect)
+{
+  wdt_disable();  // disable watchdog
+}  // end of WDT_vect
+#endif
 
 void sendSensorValue(String content, String server, int port) {
   String headers = "POST /thegist/device/2/sensor/data HTTP/1.1\n"
