@@ -7,8 +7,9 @@
 #include "SIM800.h"
 #include "SIM800TemperatureSensor.h"
 #include "SIM800BatterySensor.h"
+#include "SIM800RTCSensor.h"
 
-//#define ENABLE_LED
+// #define ENABLE_LED
 //#define SINGLE_RUN_AND_PIPE
 #define DO_SENSORS
 #define DO_SEND
@@ -31,7 +32,7 @@ SIM800 sim800(DEFAULT_GSM_POWERSWITCH_PIN, DEFAULT_PIN);
 #define US100_TX 9
 US100 us100(US100_RX, US100_TX);
 
-const int NUM_SENSORS = 4;
+const int NUM_SENSORS = 5;
 Sensor* sensors[NUM_SENSORS];
 
 void setup()
@@ -41,8 +42,9 @@ void setup()
 
   sensors[0] = new SIM800TemperatureSensor(&sim800);
   sensors[1] = new SIM800BatterySensor(&sim800);
-  sensors[2] = new US100TemperatureSensor(&us100);
-  sensors[3] = new US100DistanceSensor(&us100);
+  sensors[2] = new SIM800RTCSensor(&sim800);
+  sensors[3] = new US100TemperatureSensor(&us100);
+  sensors[4] = new US100DistanceSensor(&us100);
 
 #ifdef ENABLE_LED
   pinMode(17, OUTPUT);
