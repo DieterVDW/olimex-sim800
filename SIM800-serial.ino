@@ -173,19 +173,19 @@ ISR (WDT_vect)
 #endif
 
 void sendSensorValue(String content, String server, int port) {
-  String headers = "POST /thegist/device/2/sensor/data HTTP/1.1\n"
-                   "Host: " + server + ":" + String(port) + "\n"
-                   "Connection: keep-alive\n"
-                   "Content-Length: " + String(content.length()) + "\n"
-                   "Cache-Control: no-cache\n"
-                   "User-Agent: Olimex Sensorbed 1.0\n"
-                   "Content-Type: application/json\n"
-                   "Accept: */*\n\n";
+  LOG(server);
+  LOG(port);
+  LOG(content.length());
+  sim800.send("POST /thegist/device/2/sensor/data HTTP/1.1\n");
+  sim800.send("Host: " + server + ":" + String(port) + "\n");
+  sim800.send("Connection: keep-alive\n");
+  sim800.send("Content-Length: " + String(content.length()) + "\n");
+  sim800.send("Cache-Control: no-cache\n");
+  sim800.send("User-Agent: Olimex Sensorbed 1.0\n");
+  sim800.send("Content-Type: application/json\n");
+  sim800.send("Accept: */*\n\n");
   LOG("Content:");
   LOG(content);
-  LOG("Headers:");
-  LOG(headers);
-  sim800.send(headers);
   sim800.send(content);
   sim800.write(26);
   sim800.flush();
