@@ -15,8 +15,8 @@
 #define DO_SEND
 #define SIM800_SHUTDOWN
 
-#define SERVER "dietervdw.ddns.net"
-#define PORT 12345
+#define SERVER "52.58.109.152"
+#define PORT 8080
 
 #define REPORT_DELAY 3600000 // 1h
 #define SLEEP_WITH_WATCHDOG
