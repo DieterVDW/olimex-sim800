@@ -20,7 +20,7 @@
 
 #define REPORT_DELAY 3600000 // 1h
 #define SLEEP_WITH_WATCHDOG
-#define WATCHDOG_CYCLES 440  // 1 cycle ~= 8s, 69 cycles ~= 10min, 440 cycles ~= 1h
+#define WATCHDOG_CYCLES 444  // 1 cycle ~= 8s, 69 cycles ~= 10min, 444 cycles ~= 1h
 
 #define DEFAULT_PIN 1234
 #define ACCESS_POINT "internet.bmbpartner.be"
